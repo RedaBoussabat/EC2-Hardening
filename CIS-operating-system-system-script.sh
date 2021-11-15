@@ -1,11 +1,6 @@
-#!/bin/sh
+#!/bin/bash
 
 sudo su
-
-### Initial installations
-yum update
-yum -y install policycoreutils-python
-semanage port --add -t ssh_port_t -p tcp 22345
 
 
 ### 3.2: CIS Operating System Security Configuration Benchmarks-1.0
@@ -16,10 +11,12 @@ echo "install hfs /bin/true" >> /etc/modprobe.d/hfs.conf
 echo "install hfsplus /bin/true" > /etc/modprobe.d/hfsplus.conf
 echo "install squashfs /bin/true" > /etc/modprobe.d/squashfs.conf
 echo "install udf /bin/true" > /etc/modprobe.d/udf.conf
-yum install aide
+yum -y install aide
 aide --init -V231
-crontab -u root -e
-/bin/bash -c  'echo "0 5 * * * /usr/sbin/aide --check" >> /etc/crontab'
+touch cron_tmp
+echo "0 5 * * * /usr/sbin/aide --check" >> cron_tmp
+crontab cron_tmp
+yes | rm cron_tmp
 chown root:root /boot/grub2/grub.cfg
 chmod og-rwx /boot/grub2/grub.cfg
 echo "* hard core 0" > /etc/security/limits.conf
@@ -116,8 +113,8 @@ chown root:root /etc/cron.monthly
 chmod og-rwx /etc/cron.monthly
 chown root:root /etc/cron.d
 chmod og-rwx /etc/cron.d
-rm /etc/cron.deny
-rm /etc/at.deny
+#rm /etc/cron.deny
+#rm /etc/at.deny
 touch /etc/cron.allow
 touch /etc/at.allow
 chmod og-rwx /etc/cron.allow
@@ -130,17 +127,17 @@ sed -i -e 's/#IgnoreRhosts no/IgnoreRHosts yes/' /etc/ssh/sshd_config
 sed -i -e 's/#PermitRootLogin \(no\|yes\)/PermitRootLogin no/' /etc/ssh/sshd_config
 sed -i -e 's/#PermitEmptyPasswords \(no\|yes\)/PermitEmptyPasswords no/' /etc/ssh/sshd_config
 sed -i -e 's/#PermitUserEnvironment \(no\|yes\)/PermitUserEnvironment no/' /etc/ssh/sshd_config
-sed -i -e 's/# Ciphers and keying/# Ciphers and keying \nCiphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ct r,aes128-ctr/' test_config
-sed -i -e 's/#ClientAliveInterval 300/ClientAliveInterval 300/' test_config
-sed -i -e 's/#ClientAliveCountMax 0/ClientAliveCountMax 0/' test_config
-sed -i -e 's/#Banner none/Banner \/etc\/issue.net/' test_config
+sed -i -e 's/# Ciphers and keying/# Ciphers and keying \nCiphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ct r,aes128-ctr/' /etc/ssh/sshd_config
+sed -i -e 's/#ClientAliveInterval 300/ClientAliveInterval 300/' /etc/ssh/sshd_config
+sed -i -e 's/#ClientAliveCountMax 0/ClientAliveCountMax 0/' /etc/ssh/sshd_config
+sed -i -e 's/#Banner none/Banner \/etc\/issue.net/' /etc/ssh/sshd_config
 echo "password requisite pam_pwquality.so try_first_pass retry=3" >> /etc/pam.d/password-auth
 echo "password requisite pam_pwquality.so try_first_pass retry=3" >> /etc/pam.d/system-auth
-sed -i -e 's/minlen = [0-9]*[0-9]*/minlen = 14/' test-conf
-sed -i -e 's/dcredit = [0-9]*[0-9]*/dcredit = -1/' test-conf
-sed -i -e 's/ucredit = [0-9]*[0-9]*/ucredit = -1/' test-conf
-sed -i -e 's/ocredit = [0-9]*[0-9]*/ocredit = -1/' test-conf
-sed -i -e 's/lcredit = [0-9]*[0-9]*/lcredit = -1/' test-conf
+sed -i -e 's/minlen = [0-9]*[0-9]*/minlen = 14/' /etc/security/pwquality.conf
+sed -i -e 's/dcredit = [0-9]*[0-9]*/dcredit = -1/' /etc/security/pwquality.conf
+sed -i -e 's/ucredit = [0-9]*[0-9]*/ucredit = -1/' /etc/security/pwquality.conf
+sed -i -e 's/ocredit = [0-9]*[0-9]*/ocredit = -1/' /etc/security/pwquality.conf
+sed -i -e 's/lcredit = [0-9]*[0-9]*/lcredit = -1/' /etc/security/pwquality.conf
 echo "password sufficient pam_unix.so remember=5" >> /etc/pam.d/system-auth
 echo "password sufficient pam_unix.so remember=5" >> /etc/pam.d/password-auth
 sed -i -e 's/SELINUX=[a-z]*/SELINUX=enforcing/' config
@@ -190,4 +187,4 @@ echo "-w /sbin/insmod -p x -k modules
 -a always,exit -F arch=b64 -S init_module -S delete_module -k modules" >> /etc/audit/rules.d/audit.rules
 echo "-e 2" >> /etc/audit/rules.d/audit.rules
 sed -i '/^space_left_action/s/= .*/= emailaction_mail_acct = rootadmin_space_left_action = halt/' /etc/audit/auditd.conf
-sed -i '/^max_log_file_action/s/= .*/= keep_logs/' etc/audit/auditd.conf
+sed -i '/^max_log_file_action/s/= .*/= keep_logs/' /etc/audit/auditd.conf
